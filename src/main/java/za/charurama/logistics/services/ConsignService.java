@@ -67,6 +67,8 @@ public class ConsignService {
     }
 
     public RestResponse saveConsigneeContactDetails(ConsigneeContactDetails model){
+        String msisdn = PhoneNumber.getCorrectPhoneNumber(model.getTelephone(),model.getCountryCode());
+        model.setTelephone(msisdn);
         if (model.getId() == null || model.getId().isEmpty()) {
             model.setId(null);
             ConsigneeContactDetails record = consigneeContactsRepository.findFirstByTelephoneEquals(model.getTelephone());
@@ -74,8 +76,6 @@ public class ConsignService {
                 return new RestResponse(true,"Record already exists");
             }
         }
-        String msisdn = PhoneNumber.getCorrectPhoneNumber(model.getTelephone(),model.getCountryCode());
-        model.setTelephone(msisdn);
         consigneeContactsRepository.save(model);
         cacheClient.setItem(model.getTelephone(),getConsigneeById(model.getConsigneeId()));
         return new RestResponse(false,"Saved successfully");

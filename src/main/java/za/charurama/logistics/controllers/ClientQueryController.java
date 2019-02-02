@@ -24,4 +24,5 @@ public class ClientQueryController {
     public Consignee getConsigneeByTelegramId(@RequestParam("telegramId") long telegramId){
         return consignService.getConsigneeByTelegramId(telegramId);
     }
+
 }
