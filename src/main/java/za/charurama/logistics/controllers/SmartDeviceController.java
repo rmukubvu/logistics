@@ -3,6 +3,7 @@ package za.charurama.logistics.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import za.charurama.logistics.models.RestResponse;
 import za.charurama.logistics.models.SmartDevice;
 import za.charurama.logistics.models.SmartDeviceAllocation;
 import za.charurama.logistics.services.SmartDeviceService;
@@ -23,7 +24,7 @@ public class SmartDeviceController {
     }
 
     @RequestMapping(value = "/smartdevice/allocation",method = RequestMethod.POST,produces = MediaType.APPLICATION_JSON_VALUE)
-    public SmartDeviceAllocation saveSmartDeviceAllocation(@RequestBody SmartDeviceAllocation smartDeviceAllocation){
+    public RestResponse saveSmartDeviceAllocation(@RequestBody SmartDeviceAllocation smartDeviceAllocation){
         return smartDeviceService.saveSmartDeviceAllocation(smartDeviceAllocation);
     }
 
@@ -40,6 +41,11 @@ public class SmartDeviceController {
     @RequestMapping(value = "/smartdevice/device/",method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
     public SmartDeviceAllocation getAllocationByDevice(@RequestParam("deviceId") String deviceId){
         return smartDeviceService.getDeviceAllocationByDeviceId(deviceId);
+    }
+
+    @RequestMapping(value = "/smartdevice/unAllocate",method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
+    public RestResponse unallocatedDeviceFromVehicle(@RequestParam("deviceId") String deviceId){
+        return smartDeviceService.unallocatedDeviceFromVehicle(deviceId);
     }
 
 }

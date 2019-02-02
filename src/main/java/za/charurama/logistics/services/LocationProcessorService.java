@@ -1,7 +1,7 @@
 package za.charurama.logistics.services;
 
 import za.charurama.logistics.disruptor.DisruptorManager;
-import za.charurama.logistics.models.ShipmentStatus;
+import za.charurama.logistics.models.VehicleLocation;
 
 
 public class LocationProcessorService {
@@ -12,7 +12,7 @@ public class LocationProcessorService {
         this.disruptorManager = disruptorManager;
     }
 
-    public void push(ShipmentStatus status){
+    public void push(VehicleLocation status){
         this.disruptorManager.publish(status);
     }
 }

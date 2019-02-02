@@ -17,5 +17,7 @@ public class User {
     @Indexed
     private String emailAddress;
     private String password;
+    private String firstName;
+    private String lastName;
     private Date createdDate;
 }

@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import za.charurama.logistics.models.Consignee;
 import za.charurama.logistics.models.ConsigneeContactDetails;
 import za.charurama.logistics.models.Consignor;
+import za.charurama.logistics.models.RestResponse;
 import za.charurama.logistics.services.ConsignService;
 
 @RestController
@@ -16,7 +17,7 @@ public class ConsignController {
 
 
     @PostMapping(value = "/consignor", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Consignor saveConsignor(@RequestBody Consignor consignor) {
+    public RestResponse saveConsignor(@RequestBody Consignor consignor) {
         return consigneeService.saveConsignor(consignor);
     }
 
@@ -26,7 +27,7 @@ public class ConsignController {
     }
 
     @PostMapping(value = "/consignee", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Consignee saveConsigee(@RequestBody Consignee consignee) {
+    public RestResponse saveConsigee(@RequestBody Consignee consignee) {
         return consigneeService.saveConsigee(consignee);
     }
 
@@ -36,7 +37,7 @@ public class ConsignController {
     }
 
     @PostMapping(value = "/consignee/contacts", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ConsigneeContactDetails saveConsigeeContacts(@RequestBody ConsigneeContactDetails consigneeContactDetails) {
+    public RestResponse saveConsigeeContacts(@RequestBody ConsigneeContactDetails consigneeContactDetails) {
         return consigneeService.saveConsigneeContactDetails(consigneeContactDetails);
     }
 

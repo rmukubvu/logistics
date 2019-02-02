@@ -19,6 +19,6 @@ public class LogisticsApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) {
-		cacheService.cacheLookupData();
+		cacheService.cacheData();
 	}
 }

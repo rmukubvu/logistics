@@ -13,7 +13,7 @@ public class ShipmentController {
     ShipmentService shipmentService;
 
     @PostMapping(value = "/shipment",produces = MediaType.APPLICATION_JSON_VALUE)
-    public Shipment saveShipment(@RequestBody Shipment shipment){
+    public RestResponse saveShipment(@RequestBody Shipment shipment){
         return shipmentService.saveShipment(shipment);
     }
 

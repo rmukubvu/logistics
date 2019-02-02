@@ -15,7 +15,8 @@ import za.charurama.logistics.services.LocationLoggerService;
 public class LocationController {
 
     @Autowired
-    private LocationLoggerService locationLoggerService;
+    LocationLoggerService locationLoggerService;
+
 
     @PostMapping(
             value = "/location",

@@ -31,7 +31,7 @@ public class ShipmentService {
     @Autowired
     StatusHistoryRepository statusHistoryRepository;
 
-    public Shipment saveShipment(Shipment shipment){
+    public RestResponse saveShipment(Shipment shipment){
         if (shipment.getManifestReference().isEmpty())
             shipment.setManifestReference(autoNumberService.getManifestReference());
         shipment.setWayBillNumber(autoNumberService.getWayBillSequence());
@@ -48,7 +48,7 @@ public class ShipmentService {
         //log status change
         logInitialStatus(result.getWayBillNumber());
         //done
-        return result;
+        return new RestResponse(false,"Device has been detached from vehicle");
     }
 
     public Shipment getShipmentByWayBill(long waybill){
@@ -168,7 +168,7 @@ public class ShipmentService {
     public void logShipmentMovement(VehicleLocation vehicleLocation){
         List<Shipment> shipments = getShipmentsOnTruck(vehicleLocation.getVehicleId());
         for (Shipment shipment:shipments
-             ) {
+        ) {
             ShipmentMovement shipmentMovement = new ShipmentMovement();
             shipmentMovement.setCreatedDate(new Date());
             shipmentMovement.setLongitude(vehicleLocation.getLongitude());

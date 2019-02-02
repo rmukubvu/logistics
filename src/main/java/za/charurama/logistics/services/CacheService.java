@@ -7,9 +7,11 @@ import za.charurama.logistics.cache.RedisCacheClient;
 import za.charurama.logistics.constants.CacheKeys;
 import za.charurama.logistics.models.ClearingStatus;
 import za.charurama.logistics.models.Country;
+import za.charurama.logistics.models.User;
 import za.charurama.logistics.models.VehicleLocation;
 import za.charurama.logistics.repository.ClearingStatusRepository;
 import za.charurama.logistics.repository.CountryRepository;
+import za.charurama.logistics.repository.UserRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,19 +21,26 @@ import java.util.stream.Stream;
 public class CacheService {
 
     @Autowired
-    private ClearingStatusRepository clearingStatusRepository;
-
+    ClearingStatusRepository clearingStatusRepository;
     @Autowired
-    private CountryRepository countryRepository;
+    UserRepository userRepository;
+    @Autowired
+    CountryRepository countryRepository;
     private RedisCache cacheClient = RedisCacheClient.getInstance().getCache();
 
-    public void cacheLookupData(){
+    public void cacheData(){
         Iterable<ClearingStatus> clearingStatuses = clearingStatusRepository.findAll();
         Iterable<Country> countries = countryRepository.findAll();
+        Iterable<User> users = userRepository.findAll();
         //do for clearing statuses
         cacheClient.setItem(CacheKeys.CLEARING_STATUS,clearingStatuses);
         //do for countries
         cacheClient.setItem(CacheKeys.COUNTRIES,countries);
+        //cache users
+        for (User user: users
+             ) {
+            cacheClient.setItem(user.getEmailAddress(),user);
+        }
     }
 
     public Iterable<ClearingStatus> getClearingStatus(){

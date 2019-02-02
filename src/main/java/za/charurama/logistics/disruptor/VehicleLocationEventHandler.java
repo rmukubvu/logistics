@@ -1,27 +1,24 @@
-package za.charurama.logistics.services;
+package za.charurama.logistics.disruptor;
 
+import com.lmax.disruptor.EventHandler;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import za.charurama.logistics.common.PhoneNumber;
 import za.charurama.logistics.constants.MessagingTypes;
 import za.charurama.logistics.contracts.EmailService;
 import za.charurama.logistics.contracts.SmsService;
-import za.charurama.logistics.messaging.TwilioClientSingleton;
 import za.charurama.logistics.models.*;
 import za.charurama.logistics.repository.MessagingLogsRepository;
 import za.charurama.logistics.repository.SmsResponseRepository;
+import za.charurama.logistics.services.ShipmentService;
+import za.charurama.logistics.services.TrackingAnalyticsService;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
 
-@Service
-public class NotificationsService {
 
+public class VehicleLocationEventHandler implements EventHandler<VehicleLocation> {
     @Autowired
     ShipmentService shipmentService;
-
     @Autowired
     MessagingLogsRepository messagingLogsRepository;
 
@@ -37,31 +34,21 @@ public class NotificationsService {
     @Autowired
     TrackingAnalyticsService trackingAnalyticsService;
 
-    @Value("${email.originator}")
-    String from;
-
-    @Value("${twilio.whatsapp.number}")
-    String twilioNumber;
-    /*@Autowired
-    private LocationProcessorService processorService;*/
-
-    //TODO: vehicle id will get the driver details and status
-    public RestResponse sendNotification(ShipmentStatus shipmentStatus) {
-        //processorService.push(shipmentStatus);
+    @Override
+    public void onEvent(VehicleLocation vehicleLocation, long l, boolean b) {
         try {
             //log it
-            shipmentService.saveShipmentStatus(shipmentStatus);
-            //do processing
-            send(shipmentStatus);
-
+            if (vehicleLocation != null) {
+                shipmentService.logShipmentMovement(vehicleLocation);
+                send(vehicleLocation.getVehicleId());
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
-        return new RestResponse("Queued");
     }
 
-    private void send(ShipmentStatus event) {
-        Iterable<ShipmentViewModel> shipmentViewModels = shipmentService.getShipmentViewModel(event.getVehicleId());
+    private void send(String vehicleId) {
+        Iterable<ShipmentViewModel> shipmentViewModels = shipmentService.getShipmentViewModel(vehicleId);
         for (ShipmentViewModel viewModel : shipmentViewModels
         ) {
             String analytics = getDistanceMetrics(viewModel.getManifestReference());
@@ -72,12 +59,8 @@ public class NotificationsService {
             Executors.newSingleThreadExecutor().execute(() -> {
                 for (ConsigneeContactDetails contact : viewModel.getContactDetails()
                 ) {
-                    String phoneNumber = contact.getTelephone();
-                    smsNotification(event.getVehicleId(), phoneNumber, message);
-                    //sendWhatsappNotification(event.getVehicleId(), phoneNumber, message);
-                    //sendEmailNotification(event.getVehicleId(), contact.getEmailAddress(), subject, message);
                     String html = getHtml(viewModel,message);
-                    sendEmailNotificationWithHtmlBody(event.getVehicleId(), contact.getEmailAddress(), subject, html);
+                    sendEmailNotificationWithHtmlBody(vehicleId, contact.getEmailAddress(), subject, html);
                 }
             });
         }
@@ -95,39 +78,6 @@ public class NotificationsService {
         return "";
     }
 
-    private String getEstimatedTimeOfArrival(String manifestReference){
-        DistanceMetrics distanceMetrics = trackingAnalyticsService.getDistanceMetricsByManifestReference(manifestReference);
-        if (distanceMetrics != null){
-            return distanceMetrics.getEstimatedTimeOfArrival();
-        }
-        return "";
-    }
-
-    private void sendEmailNotification(String vehicleId, String destination, String subject, String message) {
-        String response = sendGridEmailService.sendText(from, destination, subject, message);
-        logMessages(new MessagingLog(vehicleId, destination, message, MessagingTypes.EMAIL, response));
-    }
-
-    private void sendWhatsappNotification(String vehicleId, String destination, String message) {
-        RoutingMessage routingMessage = new RoutingMessage(twilioNumber, destination, message, true);
-        String response = TwilioClientSingleton.getInstance().send(routingMessage, true);
-        logMessages(new MessagingLog(vehicleId, destination, message, MessagingTypes.WHATSAPP, response));
-    }
-
-    private void smsNotification(String vehicleId, String destination, String message) {
-        SmsResponse response = clickatellSmsService.sendSms(destination, message);
-        String responseFromServiceProvider;
-        if (response.getError() == null) {
-            responseFromServiceProvider = response.getMessages().get(0).getApiMessageId();
-        } else {
-            responseFromServiceProvider = response.getErrorDescription().toString();
-        }
-        //save response
-        smsResponseRepository.save(response);
-        //save logs
-        logMessages(new MessagingLog(vehicleId, destination, message, MessagingTypes.SMS, responseFromServiceProvider));
-    }
-
     private String getHtml(ShipmentViewModel model,String message) {
         String result = "";
         ClassLoader classLoader = getClass().getClassLoader();
@@ -138,9 +88,7 @@ public class NotificationsService {
         }
         return result.replace("%coordinates%", String.format("%f,%f", model.getLatitude(),model.getLongitude()))
                 .replace("%consignee%", model.getConsignee())
-                .replace("%status%", "Status: " + model.getStatus())
-                .replace("%manifest%","Manifest: " + model.getManifestReference())
-                .replace("%analytics%",getEstimatedTimeOfArrival(model.getManifestReference()));
+                .replace("%status%", message);
     }
 
     private void sendEmailNotificationWithHtmlBody(String userId,String destination,String subject,String body) {
@@ -151,5 +99,4 @@ public class NotificationsService {
     private void logMessages(MessagingLog messagingLogs) {
         messagingLogsRepository.save(messagingLogs);
     }
-
 }

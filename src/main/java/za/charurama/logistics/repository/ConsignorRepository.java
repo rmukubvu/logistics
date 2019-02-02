@@ -4,4 +4,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import za.charurama.logistics.models.Consignor;
 
 public interface ConsignorRepository extends MongoRepository<Consignor,String>{
+    Consignor findFirstByNameEquals(String name);
 }

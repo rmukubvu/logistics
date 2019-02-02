@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import za.charurama.logistics.models.Consignee;
 import za.charurama.logistics.models.Consignor;
+import za.charurama.logistics.models.RestResponse;
 import za.charurama.logistics.models.Shipment;
 import za.charurama.logistics.services.AutoNumberService;
 import za.charurama.logistics.services.ConsignService;
@@ -35,16 +36,16 @@ public class LogisticsApplicationTests {
 	public void saveConsignor(){
 		Consignor actual = new Consignor();
 		actual.setName("BOWLER2");
-		Consignor expected = consignService.saveConsignor(actual);
-		Assert.assertSame(actual.getName(),expected.getName());
+		RestResponse expected = consignService.saveConsignor(actual);
+		Assert.assertTrue(expected.isError());
 	}
 
 	@Test
 	public void saveConsignee(){
 		Consignee actual = new Consignee();
 		actual.setName("INNSCOR");
-		Consignee expected = consignService.saveConsigee(actual);
-		Assert.assertSame(actual.getName(),expected.getName());
+		RestResponse expected = consignService.saveConsigee(actual);
+		Assert.assertTrue(expected.isError());
 	}
 
 

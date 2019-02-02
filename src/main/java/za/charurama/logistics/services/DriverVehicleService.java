@@ -2,6 +2,7 @@ package za.charurama.logistics.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import za.charurama.logistics.exceptions.RecordNotFoundException;
 import za.charurama.logistics.models.Driver;
 import za.charurama.logistics.models.SmartDeviceAllocation;
 import za.charurama.logistics.models.Vehicle;
@@ -33,6 +34,18 @@ public class DriverVehicleService {
     }
 
     public Vehicle saveVehicle(Vehicle vehicle){
+        if (vehicle.getId() == null || vehicle.getId().isEmpty()) {
+            vehicle.setId(null);
+
+            String license = vehicle.getLicenseId().trim();
+            try {
+                Vehicle exists = getVehicleByLicense(license);
+                if ( exists != null )
+                    return exists;
+            } catch (RecordNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         return vehicleRepository.save(vehicle);
     }
 
@@ -79,5 +92,13 @@ public class DriverVehicleService {
             return getVehicleById(smartDeviceAllocation.getVehicleId());
         }
         return new Vehicle();
+    }
+
+    private Vehicle getVehicleByLicense(String license) throws RecordNotFoundException {
+        Vehicle record = vehicleRepository.findFirstByLicenseIdEquals(license);
+        if ( record != null ) {
+            return record;
+        }
+        throw new RecordNotFoundException("Record is not available");
     }
 }
