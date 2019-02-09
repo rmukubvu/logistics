@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.charurama.logistics.constants.ClearingStatusTypes;
 import za.charurama.logistics.models.*;
-import za.charurama.logistics.repository.ShipmentMovementRepository;
-import za.charurama.logistics.repository.ShipmentRepository;
-import za.charurama.logistics.repository.ShipmentStatusRepository;
-import za.charurama.logistics.repository.StatusHistoryRepository;
+import za.charurama.logistics.repository.*;
 
 import java.util.*;
 
@@ -30,13 +27,20 @@ public class ShipmentService {
     ConsignService consignService;
     @Autowired
     StatusHistoryRepository statusHistoryRepository;
+    @Autowired
+    ShipmentHistoryRepository shipmentHistoryRepository;
+
 
     public RestResponse saveShipment(Shipment shipment){
         if (shipment.getManifestReference().isEmpty())
             shipment.setManifestReference(autoNumberService.getManifestReference());
         shipment.setWayBillNumber(autoNumberService.getWayBillSequence());
-
+        //save
         Shipment result = shipmentRepository.save(shipment);
+        //do location
+        locationLoggerService.addLastKnowLocation(result.getVehicleId(),
+                result.getDestinationLatitude(),
+                result.getDestinationLongitude());
         //do status also
         ShipmentStatus shipmentStatus = new ShipmentStatus();
         shipmentStatus.setStatusId(12); //initial status - loaded
@@ -48,11 +52,15 @@ public class ShipmentService {
         //log status change
         logInitialStatus(result.getWayBillNumber());
         //done
-        return new RestResponse(false,"Device has been detached from vehicle");
+        return new RestResponse(false,"Shipment has been loaded to vehicle");
     }
 
     public Shipment getShipmentByWayBill(long waybill){
-        return shipmentRepository.findFirstByWayBillNumberEquals(waybill);
+        Shipment shipment = shipmentRepository.findFirstByWayBillNumberEquals(waybill);
+        if (shipment == null){ // check if offloaded already
+            return cacheService.getOffloadedShipmentByWaybill(waybill);
+        }
+        return shipment;
     }
 
     public Iterable<Shipment> getShipmentsByManifestReference(String manifestReference){
@@ -88,11 +96,30 @@ public class ShipmentService {
         if ( result != null ){
             result.setCreatedDate(new Date());
             result.setStatusId(shipmentStatus.getStatusId());
+            //log history
             logStatusHistory(result);
+            //do offload check
+            moveToOffloaded(result);
+            //done
             return shipmentStatusRepository.save(result);
         }// do an insert
         logStatusHistory(shipmentStatus);
         return shipmentStatusRepository.save(shipmentStatus);
+    }
+
+    private void moveToOffloaded(ShipmentStatus shipmentStatus) {
+        if (shipmentStatus.getStatusId() == 11) {
+            //get shipment
+            Shipment shipment = shipmentRepository.findFirstByWayBillNumberEquals(shipmentStatus.getWayBillNumber());
+            if (shipment != null) {
+                //move to history
+                shipmentHistoryRepository.save(shipment);
+                //delete it
+                shipmentRepository.delete(shipment);
+                //have a copy in memory
+                cacheService.saveOffloadedShipment(shipment);
+            }
+        }
     }
 
     private void logStatusHistory(ShipmentStatus shipmentStatus){
@@ -136,6 +163,10 @@ public class ShipmentService {
             statusText = cacheService.getClearingStatusById(shipmentStatus.getStatusId()).getStatus();
             return new DashboardStatus(waybill, progress, progress + "%", statusText);
         }
+        else {
+            shipmentStatus = new ShipmentStatus();
+            shipmentStatus.setStatusId(12); // the default status
+        }
         statusText = cacheService.getClearingStatusById(shipmentStatus.getStatusId()).getStatus();
         return new DashboardStatus(waybill, 0, "0%", statusText);
     }
@@ -145,7 +176,7 @@ public class ShipmentService {
         Iterable<ConsigneeContactDetails> consigneeContactDetails;
         VehicleLocation lastKnownLocation = locationLoggerService.getLastKnownLocation(vehicleId);
         List<ShipmentStatus> shipmentStatuses = getShipmentStatus(vehicleId);
-        List<Shipment> shipments = getShipmentsOnTruck(vehicleId);
+        Iterable<Shipment> shipments = getShipmentsOnTruck(vehicleId);
 
         String statusText = "";
         for (Shipment shipment : shipments
@@ -159,14 +190,14 @@ public class ShipmentService {
             }
             String consignee = consignService.getConsigneeById(shipment.getConsigneeId()).getName();
             ShipmentViewModel e = new ShipmentViewModel(consignee, statusText, shipment.getManifestReference(), lastKnownLocation.getLatitude(),
-                    lastKnownLocation.getLongitude(), shipment.getWayBillNumber(), consigneeContactDetails);
+                    lastKnownLocation.getLongitude(), shipment.getWayBillNumber(), consigneeContactDetails,shipment.getContents());
             shipmentViewModelList.add(e);
         }
         return shipmentViewModelList;
     }
 
     public void logShipmentMovement(VehicleLocation vehicleLocation){
-        List<Shipment> shipments = getShipmentsOnTruck(vehicleLocation.getVehicleId());
+        Iterable<Shipment> shipments = getShipmentsOnTruck(vehicleLocation.getVehicleId());
         for (Shipment shipment:shipments
         ) {
             ShipmentMovement shipmentMovement = new ShipmentMovement();
@@ -181,13 +212,16 @@ public class ShipmentService {
         }
     }
 
-    private List<Shipment> getShipmentsOnTruck(String vehicleId) {
-        List<ShipmentStatus> shipmentStatuses = getShipmentStatus(vehicleId);
+    private Iterable<Shipment> getShipmentsOnTruck(String vehicleId) {
+        /*List<ShipmentStatus> shipmentStatuses = getShipmentStatus(vehicleId);
         List<Shipment> shipmentsOnTruck = new ArrayList<>();
         for (ShipmentStatus shipmentStatus : shipmentStatuses
         ) {
             shipmentsOnTruck.add(shipmentRepository.findFirstByWayBillNumberEquals(shipmentStatus.getWayBillNumber()));
         }
-        return shipmentsOnTruck;
+        return shipmentsOnTruck;*/
+        return shipmentRepository.findShipmentsByVehicleIdEquals(vehicleId);
     }
+
+
 }

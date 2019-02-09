@@ -1,6 +1,7 @@
 package za.charurama.logistics.services;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 
 @Service
-public class NotificationsService {
+public class NotificationsService extends Notify {
 
     @Autowired
     ShipmentService shipmentService;
@@ -42,6 +43,9 @@ public class NotificationsService {
 
     @Value("${twilio.whatsapp.number}")
     String twilioNumber;
+
+    @Autowired
+    RealtimeService realtimeService;
     /*@Autowired
     private LocationProcessorService processorService;*/
 
@@ -68,7 +72,7 @@ public class NotificationsService {
             String mapsUrl = String.format("http://www.google.com/maps/place/%f,%f", viewModel.getLatitude(), viewModel.getLongitude());
             String message = String.format("%s\n\n%s\n%s\n%s\n\n%s", mapsUrl, viewModel.getManifestReference(), viewModel.getConsignee(), viewModel.getStatus(),analytics);
             String subject = String.format("Status Update :- %s - %s", viewModel.getManifestReference(), viewModel.getConsignee());
-            //mock data
+            NotifyAlways(String.format("Status updated for %s -> %s",viewModel.getManifestReference(),viewModel.getStatus()));
             Executors.newSingleThreadExecutor().execute(() -> {
                 for (ConsigneeContactDetails contact : viewModel.getContactDetails()
                 ) {
@@ -152,4 +156,12 @@ public class NotificationsService {
         messagingLogsRepository.save(messagingLogs);
     }
 
+    @Override
+    public void NotifyAlways(String message) {
+        try {
+            realtimeService.sendMessage(message);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
 }

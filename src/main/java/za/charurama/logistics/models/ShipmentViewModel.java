@@ -10,9 +10,10 @@ public class ShipmentViewModel {
     private double longitude;
     private String status;
     private long wayBill;
+    private String contents;
     private Iterable<ConsigneeContactDetails> contactDetails;
 
-    public ShipmentViewModel(String consignee, String status, String manifestReference, double latitude, double longitude, long waybill, Iterable<ConsigneeContactDetails> contactDetails) {
+    public ShipmentViewModel(String consignee, String status, String manifestReference, double latitude, double longitude, long waybill, Iterable<ConsigneeContactDetails> contactDetails,String contents) {
         this.consignee = consignee;
         this.manifestReference = manifestReference;
         this.latitude = latitude;
@@ -20,6 +21,7 @@ public class ShipmentViewModel {
         this.contactDetails = contactDetails;
         this.status = status;
         this.wayBill = waybill;
+        this.contents = contents;
     }
 
 }

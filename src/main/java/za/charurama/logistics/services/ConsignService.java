@@ -97,11 +97,15 @@ public class ConsignService {
         Consignee consignee = getConsigneeByTelephoneNumber(telephoneNumber);
         if (consignee != null){
             cacheClient.setItem(String.valueOf(telegramId),consignee);
+            return new RestResponse(false,"Mapped successfully to " + consignee.getName());
         }
-        return new RestResponse(false,"Mapped successfully to " + consignee.getName());
+        return new RestResponse(true,"Client is not mapped to any Consignee");
     }
 
     public Consignee getConsigneeByTelegramId(long telegramId){
-        return cacheClient.getItem(String.valueOf(telegramId),Consignee.class);
+        Consignee cachedRecord = cacheClient.getItem(String.valueOf(telegramId),Consignee.class);
+        if (cachedRecord == null)
+            return new Consignee();
+        return cachedRecord;
     }
 }

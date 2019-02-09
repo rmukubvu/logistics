@@ -40,13 +40,13 @@ public class LogisticsApplicationTests {
 		Assert.assertTrue(expected.isError());
 	}
 
-	@Test
+	/*@Test
 	public void saveConsignee(){
 		Consignee actual = new Consignee();
-		actual.setName("INNSCOR");
+		actual.setName("DATALABS");
 		RestResponse expected = consignService.saveConsigee(actual);
 		Assert.assertTrue(expected.isError());
-	}
+	}*/
 
 
 

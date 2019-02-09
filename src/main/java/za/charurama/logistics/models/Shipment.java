@@ -24,5 +24,6 @@ public class Shipment {
     private double sourceLongitude;
     private double destinationLatitude;
     private double destinationLongitude;
+    private String contents;
     private Date loadedDate;
 }

@@ -31,7 +31,12 @@ public class RealtimeService {
     public void sendMessage(String message) throws MqttException {
         byte[] payload = message.getBytes();
         MqttMessage mqttMessage = new MqttMessage(payload);
+        client.publish(GoogleMaps.SYSTEM_UPDATES_TOPIC,mqttMessage);
+    }
+
+    public void locationUpdates(String message) throws MqttException {
+        byte[] payload = message.getBytes();
+        MqttMessage mqttMessage = new MqttMessage(payload);
         client.publish(GoogleMaps.LOCATION_UPDATES_TOPIC,mqttMessage);
-        //return new RestResponse("sent via mqtt");
     }
 }
