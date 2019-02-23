@@ -14,6 +14,8 @@ import za.charurama.logistics.repository.SystemAdminsRepository;
 import za.charurama.logistics.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 
 @Service
@@ -51,7 +53,7 @@ public class UserLoginService extends Notify {
             //get html template
             String html = getHtml(result);
             if (finalIsNewUser)
-                sendEmailNotification(result.getId(), result.getEmailAddress(), "Zimcon Login Details", html);
+                sendEmailNotification(result.getId(), result.getEmailAddress(), "Logistics Tracking Login Details", html);
         });
         return new RestResponse(false,"User created successfully");
     }
@@ -68,6 +70,17 @@ public class UserLoginService extends Notify {
 
     public Iterable<User> getAllUsers(){
         return userRepository.findAll();
+    }
+
+    public Iterable<UserViewModel> getAllViewModelList(){
+        Iterable<User> users = getAllUsers();
+        List<UserViewModel> viewModelList = new ArrayList<>();
+        for (User user:users
+             ) {
+               SystemAdmin admin = checkIfAdmin(user.getId());
+               viewModelList.add(new UserViewModel(user,admin.getIsAdmin()));
+        }
+        return viewModelList;
     }
 
     public LoginResponse login(String email, String password) {
@@ -108,7 +121,7 @@ public class UserLoginService extends Notify {
         }
         return result.replace("%full_name%", String.format("%s %s", user.getFirstName(), user.getLastName()))
                 .replace("%user_name%", user.getEmailAddress())
-                .replace("%user_password%", "123456789");
+                .replace("%user_password%",LoginCipher.decrpty(user.getPassword()));
     }
 
     private String getHtml(User user,String password) {
@@ -126,7 +139,7 @@ public class UserLoginService extends Notify {
 
     private void sendEmailNotification(String userId,String destination,String subject,String body) {
         NotifyAlways("New user email sent to " + destination);
-        String response = sendGridEmailService.sendHTML("welcome@zimcon.co.za", destination, subject, body);
+        String response = sendGridEmailService.sendHTML("welcome@logisticstracking.co.za", destination, subject, body);
         logMessages(new MessagingLog(userId, destination, body, MessagingTypes.EMAIL, response));
     }
 
@@ -150,7 +163,7 @@ public class UserLoginService extends Notify {
         return new RestResponse(true,"User does not exist");
     }
 
-    public SystemAdmin checkIfAdmin(String userId){
+    private SystemAdmin checkIfAdmin(String userId){
         SystemAdmin systemAdmin = systemAdminsRepository.findFirstByUserIdEquals(userId);
         if (systemAdmin == null)
             return new SystemAdmin(userId,false);
@@ -177,7 +190,7 @@ public class UserLoginService extends Notify {
                 NotifyAlways("User: " + user.getFirstName() + " recovered his password");
                 //get html template
                 String html = getHtml(user,LoginCipher.decrpty(user.getPassword()));
-                sendEmailNotificationRecovery(user.getId(), user.getEmailAddress(), "Zimcon Login Details", html);
+                sendEmailNotificationRecovery(user.getId(), user.getEmailAddress(), "Logistics Tracking Login Details", html);
             });
         }else{
             return new RestResponse(true,"Username does not exist");
@@ -187,7 +200,7 @@ public class UserLoginService extends Notify {
 
     private void sendEmailNotificationRecovery(String userId, String destination, String subject, String body) {
         NotifyAlways("Recover email sent to " + destination);
-        String response = sendGridEmailService.sendHTML("passwordrecovery@zimcon.co.za", destination, subject, body);
+        String response = sendGridEmailService.sendHTML("passwordrecovery@logisticstracking.co.za", destination, subject, body);
         logMessages(new MessagingLog(userId, destination, body, MessagingTypes.EMAIL, response));
     }
 }

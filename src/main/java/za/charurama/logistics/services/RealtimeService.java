@@ -19,12 +19,10 @@ public class RealtimeService {
     }
 
     public void connect() throws MqttException {
-
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);
         options.setConnectionTimeout(10);
-
         client.connect(options);
     }
 

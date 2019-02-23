@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import za.charurama.logistics.exceptions.UserExistsException;
-import za.charurama.logistics.models.LoginResponse;
-import za.charurama.logistics.models.RestResponse;
-import za.charurama.logistics.models.SystemAdmin;
-import za.charurama.logistics.models.User;
+import za.charurama.logistics.models.*;
 import za.charurama.logistics.services.UserLoginService;
 
 @RestController
@@ -23,6 +20,11 @@ public class UserController {
     @GetMapping(value = "/users" , produces = MediaType.APPLICATION_JSON_VALUE)
     public Iterable<User> getAllUsers(){
         return userLoginService.getAllUsers();
+    }
+
+    @GetMapping(value = "/usersWithAdminStatus" , produces = MediaType.APPLICATION_JSON_VALUE)
+    public Iterable<UserViewModel> getAllUsersWithAdmin(){
+        return userLoginService.getAllViewModelList();
     }
 
     @PostMapping(value = "/user",produces = MediaType.APPLICATION_JSON_VALUE)

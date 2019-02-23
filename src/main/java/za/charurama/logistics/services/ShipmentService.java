@@ -63,14 +63,6 @@ public class ShipmentService {
         return shipment;
     }
 
-    public Iterable<Shipment> getShipmentsByManifestReference(String manifestReference){
-        return shipmentRepository.findShipmentsByManifestReferenceEquals(manifestReference);
-    }
-
-    public Iterable<Shipment> getShipmentByVehicle(String vehicleId){
-        return shipmentRepository.findShipmentsByVehicleIdEquals(vehicleId);
-    }
-
     public Iterable<Shipment> getShipmentsForConsignee(String consigneeId){
         return shipmentRepository.findShipmentsByConsigneeIdEquals(consigneeId);
     }
@@ -213,13 +205,6 @@ public class ShipmentService {
     }
 
     private Iterable<Shipment> getShipmentsOnTruck(String vehicleId) {
-        /*List<ShipmentStatus> shipmentStatuses = getShipmentStatus(vehicleId);
-        List<Shipment> shipmentsOnTruck = new ArrayList<>();
-        for (ShipmentStatus shipmentStatus : shipmentStatuses
-        ) {
-            shipmentsOnTruck.add(shipmentRepository.findFirstByWayBillNumberEquals(shipmentStatus.getWayBillNumber()));
-        }
-        return shipmentsOnTruck;*/
         return shipmentRepository.findShipmentsByVehicleIdEquals(vehicleId);
     }
 

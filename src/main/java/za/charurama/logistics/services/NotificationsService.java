@@ -144,7 +144,7 @@ public class NotificationsService extends Notify {
                 .replace("%consignee%", model.getConsignee())
                 .replace("%status%", "Status: " + model.getStatus())
                 .replace("%manifest%","Manifest: " + model.getManifestReference())
-                .replace("%analytics%",getEstimatedTimeOfArrival(model.getManifestReference()));
+                .replace("%analytics%","Estimated time of arrival: " + getEstimatedTimeOfArrival(model.getManifestReference()));
     }
 
     private void sendEmailNotificationWithHtmlBody(String userId,String destination,String subject,String body) {
