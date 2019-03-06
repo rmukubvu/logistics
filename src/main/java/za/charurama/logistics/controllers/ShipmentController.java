@@ -18,7 +18,7 @@ public class ShipmentController {
     }
 
     @GetMapping(value = "/shipment/vehicle")
-    public Iterable<ShipmentViewModel> getShipmentByVehicle(String vehicleId){
+    public Iterable<ShipmentViewModel> getShipmentByVehicle(@RequestParam("vehicleId") String vehicleId){
         return shipmentService.getShipmentViewModel(vehicleId);
     }
 
@@ -28,27 +28,27 @@ public class ShipmentController {
     }
 
     @GetMapping(value = "/shipment/consignee")
-    public Iterable<Shipment> getShipmentsForConsignee(String consigneeId){
-        return shipmentService.getShipmentsForConsignee(consigneeId);
+    public Iterable<ShipmentViewModel> getShipmentsForConsignee(@RequestParam("consigneeId") String consigneeId){
+        return shipmentService.shipmentHistoryByConsignee(consigneeId);
     }
 
     @GetMapping(value = "/shipment/status/waybill")
-    public ShipmentStatus gteShipmentStatusByWaybill(long waybillNumber){
+    public ShipmentStatus gteShipmentStatusByWaybill(@RequestParam("waybillNumber") long waybillNumber){
         return shipmentService.gteShipmentStatusByWaybill(waybillNumber);
     }
 
     @GetMapping(value = "/shipment/dashboard/waybill")
-    public DashboardStatus getDashboardStatusByWaybill(long waybillNumber){
+    public DashboardStatus getDashboardStatusByWaybill(@RequestParam("waybillNumber") long waybillNumber){
         return shipmentService.getDashboardStatusByWaybill(waybillNumber);
     }
 
     @GetMapping(value = "/shipment/status/history")
-    public Iterable<StatusHistory> getStatusHistory(long waybillNumber){
+    public Iterable<StatusHistory> getStatusHistory(@RequestParam("waybillNumber") long waybillNumber){
         return shipmentService.getStatusHistory(waybillNumber);
     }
 
     @GetMapping(value = "/shipment/status/consignee")
-    public Iterable<ShipmentWithStatus> getShipmentWithStatusByConsignee(String consigneeId){
+    public Iterable<ShipmentWithStatus> getShipmentWithStatusByConsignee(@RequestParam("consigneeId") String consigneeId){
         return shipmentService.getShipmentWithStatusByConsignee(consigneeId);
     }
 

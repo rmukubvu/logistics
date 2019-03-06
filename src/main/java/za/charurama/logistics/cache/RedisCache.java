@@ -41,7 +41,7 @@ public class RedisCache {
 
     public <T> void refreshValue(String key,T value){
         if ( _jedis.exists(key) )
-            deleteRecord(key);
+            removeFromCache(key);
         setItem(key,value,0);
     }
 
@@ -95,7 +95,7 @@ public class RedisCache {
 
     //public void getArea
 
-    private void deleteRecord(String key) {
+    public void removeFromCache(String key) {
         _jedis.del(key);
     }
 

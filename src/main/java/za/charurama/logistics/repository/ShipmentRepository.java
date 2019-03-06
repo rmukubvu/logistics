@@ -8,5 +8,4 @@ public interface ShipmentRepository extends MongoRepository<Shipment,String> {
     Iterable<Shipment> findShipmentsByVehicleIdEquals(String vehicleId);
     Iterable<Shipment> findShipmentsByManifestReferenceEquals(String manifestReference);
     Iterable<Shipment> findShipmentsByConsigneeIdEquals(String consigneeId);
-    void deleteShipmentByWayBillNumberEquals(long waybill);
 }

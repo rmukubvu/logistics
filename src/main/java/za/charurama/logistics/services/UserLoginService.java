@@ -198,9 +198,27 @@ public class UserLoginService extends Notify {
         return new RestResponse(false,"An Email has been sent to your inbox with login credentials");
     }
 
+    public RestResponse removeUser(String email) {
+        //will need to do audits here before u can remove a user
+        User user = getUser(email);
+        if (user != null) {
+            SystemAdmin record = systemAdminsRepository.findFirstByUserIdEquals(user.getId());
+            if (record != null)
+                systemAdminsRepository.delete(record);
+            userRepository.delete(user);
+            evictUserFromCache(email);
+        }
+        return new RestResponse(false, "User has been removed from the system");
+    }
+
+    private void evictUserFromCache(String email){
+        cacheClient.removeFromCache(email);
+    }
+
     private void sendEmailNotificationRecovery(String userId, String destination, String subject, String body) {
         NotifyAlways("Recover email sent to " + destination);
         String response = sendGridEmailService.sendHTML("passwordrecovery@logisticstracking.co.za", destination, subject, body);
         logMessages(new MessagingLog(userId, destination, body, MessagingTypes.EMAIL, response));
     }
+
 }

@@ -57,4 +57,9 @@ public class UserController {
         return userLoginService.recoverPassword(email);
     }
 
+    @DeleteMapping(value = "/removeUser",produces = MediaType.APPLICATION_JSON_VALUE)
+    public RestResponse removeUser(@RequestParam(name = "email") String email){
+        return userLoginService.removeUser(email);
+    }
+
 }

@@ -164,25 +164,35 @@ public class ShipmentService {
     }
 
     public Iterable<ShipmentViewModel> getShipmentViewModel(String vehicleId) {
-        List<ShipmentViewModel> shipmentViewModelList = new ArrayList<>();
-        Iterable<ConsigneeContactDetails> consigneeContactDetails;
         VehicleLocation lastKnownLocation = locationLoggerService.getLastKnownLocation(vehicleId);
         List<ShipmentStatus> shipmentStatuses = getShipmentStatus(vehicleId);
         Iterable<Shipment> shipments = getShipmentsOnTruck(vehicleId);
+        return getShipmentModel(lastKnownLocation, shipmentStatuses, shipments, "");
+    }
 
-        String statusText = "";
+    private Iterable<ShipmentViewModel> getShipmentModel(VehicleLocation lastKnownLocation, List<ShipmentStatus> shipmentStatuses, Iterable<Shipment> shipments, String statusText) {
+        List<ShipmentViewModel> shipmentViewModelList = new ArrayList<>();
+        Iterable<ConsigneeContactDetails> consigneeContactDetails;
         for (Shipment shipment : shipments
         ) {
             if ( shipment == null ) continue;
             consigneeContactDetails = consignService.getConsigneeContactDetailsById(shipment.getConsigneeId());
-            Optional<ShipmentStatus> optionalShipmentStatus = shipmentStatuses.stream().filter(e -> e.getWayBillNumber() == shipment.getWayBillNumber()).findFirst();
-            if (optionalShipmentStatus.isPresent()) {
-                ShipmentStatus s = optionalShipmentStatus.get();
-                statusText = cacheService.getClearingStatusById(s.getStatusId()).getStatus();
+            if (shipmentStatuses != null) {
+                Optional<ShipmentStatus> optionalShipmentStatus = shipmentStatuses.stream().filter(e -> e.getWayBillNumber() == shipment.getWayBillNumber()).findFirst();
+                if (optionalShipmentStatus.isPresent()) {
+                    ShipmentStatus s = optionalShipmentStatus.get();
+                    statusText = cacheService.getClearingStatusById(s.getStatusId()).getStatus();
+                }
             }
             String consignee = consignService.getConsigneeById(shipment.getConsigneeId()).getName();
-            ShipmentViewModel e = new ShipmentViewModel(consignee, statusText, shipment.getManifestReference(), lastKnownLocation.getLatitude(),
-                    lastKnownLocation.getLongitude(), shipment.getWayBillNumber(), consigneeContactDetails,shipment.getContents());
+            float latitude = (float) shipment.getDestinationLatitude();
+            float longitude = (float) shipment.getDestinationLongitude();
+            if (lastKnownLocation != null) {
+                latitude = lastKnownLocation.getLatitude();
+                longitude = lastKnownLocation.getLongitude();
+            }
+            ShipmentViewModel e = new ShipmentViewModel(consignee, statusText, shipment.getManifestReference(), latitude,
+                    longitude, shipment.getWayBillNumber(), consigneeContactDetails,shipment.getContents());
             shipmentViewModelList.add(e);
         }
         return shipmentViewModelList;
@@ -202,6 +212,27 @@ public class ShipmentService {
             //cache it
             cacheService.saveLastKnownLocationByWaybill(shipment.getWayBillNumber(),vehicleLocation);
         }
+    }
+
+    public Iterable<ShipmentViewModel> shipmentHistoryByConsignee(String consigneeId){
+        Iterable<Shipment> shipments = getShipmentHistoryByConsigneeId(consigneeId);
+        return getShipmentModel(null, null, shipments, "Offloaded");
+    }
+
+    private Iterable<Shipment> getShipmentHistoryByConsigneeId(String consigneeId) {
+        Iterable<Shipment> currentShipments = getShipmentsForConsignee(consigneeId);
+        Iterable<Shipment> historyShipments = shipmentHistoryRepository.findShipmentsByConsigneeIdEquals(consigneeId);
+        List<Shipment> results = new ArrayList<>();
+        if (currentShipments != null)
+            for (Shipment s : currentShipments) {
+                results.add(s);
+            }
+
+        if (historyShipments != null)
+            for (Shipment e : historyShipments) {
+                results.add(e);
+            }
+        return results;
     }
 
     private Iterable<Shipment> getShipmentsOnTruck(String vehicleId) {
